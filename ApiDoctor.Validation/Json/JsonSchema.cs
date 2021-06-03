@@ -119,12 +119,15 @@ namespace ApiDoctor.Validation.Json
             JContainer obj;
             try
             {
+                if (string.IsNullOrWhiteSpace(jsonInput.JsonData))
+                    throw new Exception("Expected json string was empty or whitespace only.");
+
                 var settings = new JsonSerializerSettings { DateParseHandling = DateParseHandling.None, NullValueHandling = NullValueHandling.Include, DefaultValueHandling = DefaultValueHandling.Include };
                 obj = (JContainer)JsonConvert.DeserializeObject(jsonInput.JsonData, settings);
             }
             catch (Exception ex)
             {
-                issues.Error(ValidationErrorCode.JsonParserException, $"Failed to parse json string: {jsonInput.JsonData}.", ex);
+                issues.Error(ValidationErrorCode.JsonParserException, $"Failed to parse json string: {jsonInput.JsonData.Trim()}", ex);
                 return false;
             }
 
@@ -272,7 +275,7 @@ namespace ApiDoctor.Validation.Json
                         childType.ValidateContainerObject(obj, options, otherSchemas, issues);
                         return;
                     }
-                    else if (!typeName.TypeOnly().IEquals(this.ResourceName.TypeOnly()))
+                    else if (this.ResourceName != null && !typeName.TypeOnly().IEquals(this.ResourceName.TypeOnly()))
                     {
                         issues.Warning(ValidationErrorCode.ResourceTypeNotFound, $"unrecognized type declaration {typeName}");
                     }
